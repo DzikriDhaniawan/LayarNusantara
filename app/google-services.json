@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1012180938428",
+    "project_id": "layar-nusantara",
+    "storage_bucket": "layar-nusantara.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1012180938428:android:e2633fddb75f0dff70aab9",
+        "android_client_info": {
+          "package_name": "com.example.layarnusantara"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMMUMxsh57ICcX6aongUY36CLHRnbTM2Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
