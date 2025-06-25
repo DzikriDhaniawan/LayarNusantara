@@ -17,9 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 
 @Composable
-fun CategorySection() {
+fun CategorySection(navController: NavController) {
     Column(modifier = Modifier.padding(top = 16.dp)) {
         Text(text = "Category", modifier = Modifier.padding(bottom = 8.dp))
 
@@ -28,13 +29,16 @@ fun CategorySection() {
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 8.dp)
         ) {
-            CategoryItem(icon = Icons.Default.Movie, label = "Drama")
-            CategoryItem(icon = Icons.Default.SentimentVerySatisfied, label = "Comedy")
-            CategoryItem(icon = Icons.Default.Favorite, label = "Romance")
-            CategoryItem(icon = Icons.Default.Visibility, label = "Horror")
-            CategoryItem(icon = Icons.Default.AutoAwesome, label = "Fantasy")
+            CategoryItem(icon = Icons.Default.Movie, label = "Tema") {
+                navController.navigate("Tema")
+            }
+            CategoryItem(icon = Icons.Default.SentimentVerySatisfied, label = "Asal") {
+                navController.navigate("Asal")
+            }
+
         }
 
         Spacer(modifier = Modifier.height(8.dp))
     }
 }
+

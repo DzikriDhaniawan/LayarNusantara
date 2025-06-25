@@ -12,6 +12,8 @@ import com.example.layarnusantara.screen.AuthScreen
 import com.example.layarnusantara.screen.Homescreen
 import com.example.layarnusantara.screen.LoginScreen
 import com.example.layarnusantara.screen.SignupScreen
+import com.example.layarnusantara.pages.AsalPage
+import com.example.layarnusantara.pages.TemaPage
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
@@ -61,6 +63,14 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                 publisher = publisher,
                 duration = duration
             )
+        }
+
+        composable("Asal") {
+            AsalPage(modifier, navController)
+        }
+
+        composable("Tema") {
+            TemaPage(modifier, navController)
         }
 
     }
