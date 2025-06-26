@@ -63,6 +63,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("androidx.compose.foundation:foundation:1.6.0")
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
+    implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
 
 
     implementation ("io.coil-kt:coil-compose:2.2.0")
