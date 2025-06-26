@@ -65,11 +65,6 @@ fun MovieCard(movie: Movie, navController: NavController) {
                         Text(text = "${movie.publisher} · ${movie.duration}", fontSize = 12.sp)
                     }
                     Row {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play",
-                            modifier = Modifier.size(20.dp)
-                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             imageVector = Icons.Default.Star,

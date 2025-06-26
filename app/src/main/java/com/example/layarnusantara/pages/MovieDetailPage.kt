@@ -112,7 +112,6 @@ fun MovieDetailPage(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Optional: Popular section
         Text(
             text = "Popular",
             color = Color.Black,
