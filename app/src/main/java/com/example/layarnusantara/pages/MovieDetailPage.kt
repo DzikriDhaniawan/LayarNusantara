@@ -204,6 +204,9 @@ fun MovieDetailPage(
         CommentSection(
             movieId = judul,
             onCommentAdded = {
+                refreshRating(judul) { updatedReview ->
+                    currentReview = updatedReview
+                }
                 Firebase.firestore.collection("comments")
                     .whereEqualTo("movieId", judul)
                     .get()
@@ -219,7 +222,6 @@ fun MovieDetailPage(
 
 
     }
-
 }
 
 @Composable
@@ -330,4 +332,27 @@ fun CommentSection(
             Text(infoMessage, color = Color.Green)
         }
     }
+}
+
+fun refreshRating(judul: String, onUpdated: (Float) -> Unit) {
+    Firebase.firestore.collection("comments")
+        .whereEqualTo("movieId", judul)
+        .get()
+        .addOnSuccessListener { result ->
+            val ratings = result.mapNotNull { it.getDouble("rating")?.toFloat() }
+            if (ratings.isNotEmpty()) {
+                val avgRating = ratings.average().toFloat()
+                onUpdated(avgRating)
+
+                Firebase.firestore.collection("movie")
+                    .whereEqualTo("judul", judul)
+                    .get()
+                    .addOnSuccessListener { docs ->
+                        for (doc in docs) {
+                            Firebase.firestore.collection("movie").document(doc.id)
+                                .update("review", avgRating)
+                        }
+                    }
+            }
+        }
 }
