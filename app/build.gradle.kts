@@ -54,6 +54,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.storage.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -64,8 +65,6 @@ dependencies {
     implementation("androidx.compose.foundation:foundation:1.6.0")
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
     implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
-
-
     implementation ("io.coil-kt:coil-compose:2.2.0")
     implementation("com.tbuonomo:dotsindicator:5.1.0")
 

@@ -43,25 +43,28 @@ fun AppNavigation(modifier: Modifier = Modifier) {
         }
 
         composable(
-            route = "movie_detail/{title}/{thumbnailRes}/{publisher}/{duration}",
+            route = "movie_detail/{judul}/{thumbnail}/{durasi}/{synopsis}/{video}",
             arguments = listOf(
-                navArgument("title") { type = NavType.StringType },
-                navArgument("thumbnailRes") { type = NavType.IntType },
-                navArgument("publisher") { type = NavType.StringType },
-                navArgument("duration") { type = NavType.StringType }
+                navArgument("judul") { type = NavType.StringType },
+                navArgument("thumbnail") { type = NavType.StringType },
+                navArgument("durasi") { type = NavType.StringType },
+                navArgument("synopsis") { type = NavType.StringType },
+                navArgument("video") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val title = backStackEntry.arguments?.getString("title") ?: ""
-            val thumbnailRes = backStackEntry.arguments?.getInt("thumbnailRes") ?: 0
-            val publisher = backStackEntry.arguments?.getString("publisher") ?: ""
-            val duration = backStackEntry.arguments?.getString("duration") ?: ""
+            val judul = backStackEntry.arguments?.getString("judul") ?: ""
+            val thumbnail = backStackEntry.arguments?.getString("thumbnail") ?: ""
+            val durasi = backStackEntry.arguments?.getString("durasi") ?: ""
+            val synopsis = backStackEntry.arguments?.getString("synopsis") ?: ""
+            val video = backStackEntry.arguments?.getString("video") ?: ""
 
             MovieDetailPage(
                 navController = navController,
-                title = title,
-                thumbnailRes = thumbnailRes,
-                publisher = publisher,
-                duration = duration
+                judul = judul,
+                thumbnail = thumbnail,
+                durasi = durasi,
+                synopsis = synopsis,
+                video = video
             )
         }
 

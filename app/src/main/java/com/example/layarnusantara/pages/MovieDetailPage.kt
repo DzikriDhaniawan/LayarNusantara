@@ -2,36 +2,49 @@ package com.example.layarnusantara.pages
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
-import com.example.layarnusantara.R
+import coil.compose.AsyncImage
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import com.example.layarnusantara.model.Comment
+import com.google.firebase.auth.ktx.auth
+import androidx.compose.material.icons.filled.Send
+
 
 @Composable
 fun MovieDetailPage(
     navController: NavController,
-    title: String,
-    thumbnailRes: Int,
-    publisher: String,
-    duration: String
+    judul: String,
+    thumbnail: String,
+    durasi: String,
+    synopsis: String,
+    video: String
 ) {
     Column(
         modifier = Modifier
@@ -41,22 +54,50 @@ fun MovieDetailPage(
             .padding(16.dp)
     ) {
         Spacer(modifier = Modifier.height(42.dp))
-        // Poster
-        Image(
-            painter = painterResource(id = thumbnailRes),
-            contentDescription = title,
+
+        // Poster (pakai AsyncImage karena ini dari URL)
+        AsyncImage(
+            model = thumbnail,
+            contentDescription = judul,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
+                .height(220.dp)
                 .clip(RoundedCornerShape(12.dp))
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        val context = LocalContext.current
 
-        // Judul
+        var currentReview by remember { mutableStateOf(0f) }
+
+        LaunchedEffect(judul) {
+            Firebase.firestore.collection("movie")
+                .whereEqualTo("judul", judul)
+                .get()
+                .addOnSuccessListener { result ->
+                    for (doc in result) {
+                        currentReview = doc.getDouble("review")?.toFloat() ?: 0f
+                    }
+                }
+        }
+
+        Button(
+            onClick = {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(video))
+                context.startActivity(intent)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+        ) {
+            Text(text = "Tonton Sekarang")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Judul Film
         Text(
-            text = title,
+            text = judul,
             color = Color.Black,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
@@ -64,24 +105,37 @@ fun MovieDetailPage(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Info: Tahun, Genre, Durasi, Rating
+        // Info: Durasi & Rating
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "2025 · Action · $duration", color = Color.Gray, fontSize = 14.sp)
+            Text(text = "$durasi", color = Color.Gray, fontSize = 14.sp)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = Icons.Default.Star, contentDescription = "Rating", tint = Color.Yellow)
-                Text(text = "4.8", color = Color.Black, fontSize = 14.sp)
+                Icon(Icons.Default.Star, contentDescription = "Rating", tint = Color(0xFFFFC107))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "%.1f".format(currentReview),
+                    color = Color.Gray,
+                    fontSize = 14.sp)
             }
         }
 
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Synospis
+        Text(
+            text = "Synopsis",
+            color = Color.Black,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Deskripsi
         Text(
-            text = "Released in 2025, this film follows the story of a former agent on a mission to uncover a global conspiracy. Will he survive?",
+            text = synopsis,
             color = Color.Black,
             fontSize = 14.sp,
             lineHeight = 20.sp
@@ -89,50 +143,191 @@ fun MovieDetailPage(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Optional: Continue Watching section
+        val commentList = remember { mutableStateListOf<Comment>() }
+
+        LaunchedEffect(judul) {
+            Firebase.firestore.collection("comments")
+                .whereEqualTo("movieId", judul)
+                .get()
+                .addOnSuccessListener { result ->
+                    commentList.clear()
+                    for (doc in result) {
+                        val comment = doc.toObject(Comment::class.java)
+                        commentList.add(comment)
+                    }
+                }
+        }
         Text(
-            text = "Continue Watching",
-            color = Color.Black,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold
+            text = "Komentar & Ulasan",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 8.dp)
         )
-        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-            repeat(2) {
-                Image(
-                    painter = painterResource(id = thumbnailRes),
-                    contentDescription = "Continue Watching",
+
+        if (commentList.isEmpty()) {
+            Text("Belum ada komentar", color = Color.Gray)
+        } else {
+            commentList.forEach { comment ->
+                Card(
                     modifier = Modifier
-                        .size(140.dp)
-                        .padding(end = 12.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
-                )
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = comment.userName,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1D3557)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = comment.komentar)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = Color(0xFFFFC107)
+                            )
+                            Text(
+                                text = "%.1f".format(comment.rating ?: 0f),
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
             }
         }
+
 
         Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Popular",
-            color = Color.Black,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold
+        CommentSection(
+            movieId = judul,
+            onCommentAdded = {
+                Firebase.firestore.collection("comments")
+                    .whereEqualTo("movieId", judul)
+                    .get()
+                    .addOnSuccessListener { result ->
+                        commentList.clear()
+                        for (doc in result) {
+                            val comment = doc.toObject(Comment::class.java)
+                            commentList.add(comment)
+                        }
+                    }
+            }
         )
-        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
-            repeat(3) {
-                Image(
-                    painter = painterResource(id = thumbnailRes),
-                    contentDescription = "Popular",
-                    modifier = Modifier
-                        .size(120.dp)
-                        .padding(end = 12.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.Crop
+
+
+    }
+
+}
+
+@Composable
+fun CommentSection(
+    movieId: String,
+    onCommentAdded: () -> Unit
+) {
+    val db = Firebase.firestore
+    val user = Firebase.auth.currentUser
+
+    var commentText by remember { mutableStateOf("") }
+    var rating by remember { mutableStateOf(3f) }
+    var isSending by remember { mutableStateOf(false) }
+    var infoMessage by remember { mutableStateOf("") }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.padding(vertical = 8.dp)
+    ) {
+        Text("Rating:", fontSize = 14.sp)
+        for (i in 1..5) {
+            IconButton(onClick = { rating = i.toFloat() }) {
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = "$i Stars",
+                    tint = if (i <= rating.toInt()) Color(0xFFFFC107) else Color.LightGray
                 )
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(32.dp))
+    Column {
+        OutlinedTextField(
+            value = commentText,
+            onValueChange = { commentText = it },
+            label = { Text("Tulis komentar...") },
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                IconButton(
+                    onClick = {
+                        if (commentText.isNotBlank()) {
+                            isSending = true
+                            val comment = Comment(
+                                movieId = movieId,
+                                userId = user?.uid ?: "anon",
+                                userName = user?.displayName ?: "Anonim",
+                                komentar = commentText,
+                                rating = rating
+                            )
+
+                            db.collection("comments")
+                                .add(comment)
+                                .addOnSuccessListener {
+                                    infoMessage = "Komentar berhasil dikirim!"
+                                    commentText = ""
+                                    rating = 3f
+                                    isSending = false
+                                    onCommentAdded()
+                                }
+
+                            db.collection("comments")
+                                .whereEqualTo("movieId", movieId)
+                                .get()
+                                .addOnSuccessListener { result ->
+                                    val ratings = result.mapNotNull { it.getDouble("rating")?.toFloat() }
+                                    if (ratings.isNotEmpty()) {
+                                        val avgRating = ratings.average().toFloat()
+
+                                        db.collection("movie")
+                                            .whereEqualTo("judul", movieId)
+                                            .get()
+                                            .addOnSuccessListener { docs ->
+                                                for (doc in docs) {
+                                                    db.collection("movie").document(doc.id)
+                                                        .update("review", avgRating)
+                                                }
+                                            }
+                                    }
+                                }
+                                .addOnFailureListener {
+                                    infoMessage = "Gagal mengirim komentar"
+                                    isSending = false
+                                }
+                        }
+                    },
+                    enabled = !isSending
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "Kirim",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            singleLine = true
+        )
+
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (infoMessage.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(infoMessage, color = Color.Green)
+        }
     }
 }
-

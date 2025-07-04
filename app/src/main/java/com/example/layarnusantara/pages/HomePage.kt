@@ -6,36 +6,45 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.layarnusantara.R.drawable.nyi_roro_kidul
-import com.example.layarnusantara.R.drawable.hutan_kurcaci
-import com.example.layarnusantara.R.drawable.batu_terbelah
 import com.example.layarnusantara.component.HeaderView
 import com.example.layarnusantara.component.BannerView
 import com.example.layarnusantara.component.CategorySection
-import com.example.layarnusantara.model.Movie
-import com.example.layarnusantara.component.LatestMoviesSection
-
+import com.example.layarnusantara.component.LatestMoviesFromFirebaseSection
+import com.example.layarnusantara.model.MovieFirebase
+import com.example.layarnusantara.repository.fetchMoviesFromFirestore
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun HomePage(modifier: Modifier = Modifier, navController: NavController) {
-    val latestMovies = listOf(
-        Movie("Legenda Nyi Roro Kidul", nyi_roro_kidul, "Riri", "1h 22m"),
-        Movie("Hutan Kurcaci", hutan_kurcaci, "Riri", "1h 22m"),
-        Movie("Misteri Batu Terbelah", batu_terbelah, "Riri", "1h 25m")
-    )
+    var latestMovies by remember { mutableStateOf<List<MovieFirebase>>(emptyList()) }
+
+    LaunchedEffect(true) {
+        fetchMoviesFromFirestore {
+            latestMovies = it
+        }
+    }
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        HeaderView(modifier)
+        HeaderView(modifier = Modifier)
         Spacer(modifier = Modifier.height(10.dp))
         BannerView(modifier = Modifier)
         CategorySection(navController)
-        LatestMoviesSection(movies = latestMovies, navController = navController)
+
+        // Tampilkan hasil dari Firestore
+        if (latestMovies.isNotEmpty()) {
+            LatestMoviesFromFirebaseSection(movies = latestMovies, navController = navController)
+        }
     }
 }
+
