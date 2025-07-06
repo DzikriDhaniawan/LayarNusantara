@@ -41,7 +41,6 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController) {
         BannerView(modifier = Modifier)
         CategorySection(navController)
 
-        // Tampilkan hasil dari Firestore
         if (latestMovies.isNotEmpty()) {
             LatestMoviesFromFirebaseSection(movies = latestMovies, navController = navController)
         }

@@ -23,6 +23,8 @@ import coil.compose.AsyncImage
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -55,7 +57,6 @@ fun MovieDetailPage(
     ) {
         Spacer(modifier = Modifier.height(42.dp))
 
-        // Poster (pakai AsyncImage karena ini dari URL)
         AsyncImage(
             model = thumbnail,
             contentDescription = judul,
@@ -95,7 +96,6 @@ fun MovieDetailPage(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Judul Film
         Text(
             text = judul,
             color = Color.Black,
@@ -105,26 +105,25 @@ fun MovieDetailPage(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Info: Durasi & Rating
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "$durasi", color = Color.Gray, fontSize = 14.sp)
+            Text(text = durasi, color = Color.Gray, fontSize = 14.sp)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Star, contentDescription = "Rating", tint = Color(0xFFFFC107))
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "%.1f".format(currentReview),
                     color = Color.Gray,
-                    fontSize = 14.sp)
+                    fontSize = 14.sp
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Synospis
         Text(
             text = "Synopsis",
             color = Color.Black,
@@ -143,20 +142,6 @@ fun MovieDetailPage(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        val commentList = remember { mutableStateListOf<Comment>() }
-
-        LaunchedEffect(judul) {
-            Firebase.firestore.collection("comments")
-                .whereEqualTo("movieId", judul)
-                .get()
-                .addOnSuccessListener { result ->
-                    commentList.clear()
-                    for (doc in result) {
-                        val comment = doc.toObject(Comment::class.java)
-                        commentList.add(comment)
-                    }
-                }
-        }
         Text(
             text = "Komentar & Ulasan",
             fontSize = 20.sp,
@@ -164,63 +149,16 @@ fun MovieDetailPage(
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        if (commentList.isEmpty()) {
-            Text("Belum ada komentar", color = Color.Gray)
-        } else {
-            commentList.forEach { comment ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Text(
-                            text = comment.userName,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1D3557)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = comment.komentar)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = null,
-                                tint = Color(0xFFFFC107)
-                            )
-                            Text(
-                                text = "%.1f".format(comment.rating ?: 0f),
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-
         Spacer(modifier = Modifier.height(24.dp))
+
         CommentSection(
             movieId = judul,
             onCommentAdded = {
                 refreshRating(judul) { updatedReview ->
                     currentReview = updatedReview
                 }
-                Firebase.firestore.collection("comments")
-                    .whereEqualTo("movieId", judul)
-                    .get()
-                    .addOnSuccessListener { result ->
-                        commentList.clear()
-                        for (doc in result) {
-                            val comment = doc.toObject(Comment::class.java)
-                            commentList.add(comment)
-                        }
-                    }
             }
         )
-
-
     }
 }
 
@@ -236,6 +174,72 @@ fun CommentSection(
     var rating by remember { mutableStateOf(3f) }
     var isSending by remember { mutableStateOf(false) }
     var infoMessage by remember { mutableStateOf("") }
+    var editMode by remember { mutableStateOf<Comment?>(null) }
+
+    val commentList = remember { mutableStateListOf<Comment>() }
+
+    fun loadComments() {
+        db.collection("comments")
+            .whereEqualTo("movieId", movieId)
+            .get()
+            .addOnSuccessListener { result ->
+                commentList.clear()
+                for (doc in result) {
+                    val comment = doc.toObject(Comment::class.java)
+                    comment.documentId = doc.id
+                    commentList.add(comment)
+                }
+            }
+    }
+
+    LaunchedEffect(movieId) {
+        loadComments()
+    }
+
+    if (commentList.isEmpty()) {
+        Text("Belum ada komentar", color = Color.Gray)
+    } else {
+        commentList.forEach { comment ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(comment.userName, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(comment.komentar)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFC107))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("%.1f".format(comment.rating), fontSize = 14.sp)
+                    }
+                    if (comment.userId == user?.uid) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(onClick = { editMode = comment }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                Text("Edit", fontSize = 12.sp)
+                            }
+                            TextButton(onClick = {
+                                deleteComment(comment.documentId) {
+                                    loadComments()
+                                    onCommentAdded()
+                                }
+                            }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Hapus")
+                                Text("Hapus", fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -254,83 +258,103 @@ fun CommentSection(
         }
     }
 
-    Column {
-        OutlinedTextField(
-            value = commentText,
-            onValueChange = { commentText = it },
-            label = { Text("Tulis komentar...") },
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                IconButton(
-                    onClick = {
-                        if (commentText.isNotBlank()) {
-                            isSending = true
-                            val comment = Comment(
-                                movieId = movieId,
-                                userId = user?.uid ?: "anon",
-                                userName = user?.displayName ?: "Anonim",
-                                komentar = commentText,
-                                rating = rating
-                            )
+    OutlinedTextField(
+        value = commentText,
+        onValueChange = { commentText = it },
+        label = { Text("Tulis komentar...") },
+        modifier = Modifier.fillMaxWidth(),
+        trailingIcon = {
+            IconButton(
+                onClick = {
+                    if (commentText.isNotBlank()) {
+                        isSending = true
+                        val comment = Comment(
+                            movieId = movieId,
+                            userId = user?.uid ?: "anon",
+                            userName = user?.displayName ?: "Anonim",
+                            komentar = commentText,
+                            rating = rating
+                        )
+                        db.collection("comments")
+                            .add(comment)
+                            .addOnSuccessListener {
+                                updateAverageRating(movieId)
+                                commentText = ""
+                                rating = 3f
+                                isSending = false
+                                loadComments()
+                                onCommentAdded()
+                            }
+                            .addOnFailureListener {
+                                infoMessage = "Gagal mengirim komentar"
+                                isSending = false
+                            }
+                    }
+                },
+                enabled = !isSending
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = "Kirim",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        },
+        singleLine = true
+    )
 
-                            db.collection("comments")
-                                .add(comment)
-                                .addOnSuccessListener {
-                                    infoMessage = "Komentar berhasil dikirim!"
-                                    commentText = ""
-                                    rating = 3f
-                                    isSending = false
-                                    onCommentAdded()
-                                }
+    if (infoMessage.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(infoMessage, color = Color.Green)
+    }
 
-                            db.collection("comments")
-                                .whereEqualTo("movieId", movieId)
-                                .get()
-                                .addOnSuccessListener { result ->
-                                    val ratings = result.mapNotNull { it.getDouble("rating")?.toFloat() }
-                                    if (ratings.isNotEmpty()) {
-                                        val avgRating = ratings.average().toFloat()
+    editMode?.let { comment ->
+        var editedText by remember { mutableStateOf(comment.komentar) }
+        var editedRating by remember { mutableStateOf(comment.rating) }
 
-                                        db.collection("movie")
-                                            .whereEqualTo("judul", movieId)
-                                            .get()
-                                            .addOnSuccessListener { docs ->
-                                                for (doc in docs) {
-                                                    db.collection("movie").document(doc.id)
-                                                        .update("review", avgRating)
-                                                }
-                                            }
-                                    }
-                                }
-                                .addOnFailureListener {
-                                    infoMessage = "Gagal mengirim komentar"
-                                    isSending = false
-                                }
-                        }
-                    },
-                    enabled = !isSending
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Kirim",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+        AlertDialog(
+            onDismissRequest = { editMode = null },
+            confirmButton = {
+                TextButton(onClick = {
+                    editComment(comment.documentId, editedText, editedRating) {
+                        editMode = null
+                        loadComments()
+                        onCommentAdded()
+                    }
+                }) {
+                    Text("Simpan")
                 }
             },
-            singleLine = true
+            dismissButton = {
+                TextButton(onClick = { editMode = null }) {
+                    Text("Batal")
+                }
+            },
+            title = { Text("Edit Komentar") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = editedText,
+                        onValueChange = { editedText = it },
+                        label = { Text("Komentar") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Rating:")
+                    Row {
+                        for (i in 1..5) {
+                            IconButton(onClick = { editedRating = i.toFloat() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "$i Stars",
+                                    tint = if (i <= editedRating.toInt()) Color(0xFFFFC107) else Color.LightGray
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         )
-
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (infoMessage.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(infoMessage, color = Color.Green)
-        }
     }
 }
 
@@ -356,3 +380,42 @@ fun refreshRating(judul: String, onUpdated: (Float) -> Unit) {
             }
         }
 }
+
+fun editComment(commentId: String, newText: String, newRating: Float, onSuccess: () -> Unit) {
+    Firebase.firestore.collection("comments").document(commentId)
+        .update(mapOf(
+            "komentar" to newText,
+            "rating" to newRating
+        ))
+        .addOnSuccessListener { onSuccess() }
+}
+
+fun deleteComment(commentId: String, onSuccess: () -> Unit) {
+    Firebase.firestore.collection("comments").document(commentId)
+        .delete()
+        .addOnSuccessListener { onSuccess() }
+}
+
+fun updateAverageRating(movieId: String) {
+    Firebase.firestore.collection("comments")
+        .whereEqualTo("movieId", movieId)
+        .get()
+        .addOnSuccessListener { result ->
+            val ratings = result.mapNotNull { it.getDouble("rating")?.toFloat() }
+            if (ratings.isNotEmpty()) {
+                val avgRating = ratings.average().toFloat()
+
+                Firebase.firestore.collection("movie")
+                    .whereEqualTo("judul", movieId)
+                    .get()
+                    .addOnSuccessListener { docs ->
+                        for (doc in docs) {
+                            Firebase.firestore.collection("movie").document(doc.id)
+                                .update("review", avgRating)
+                        }
+                    }
+            }
+        }
+}
+
+

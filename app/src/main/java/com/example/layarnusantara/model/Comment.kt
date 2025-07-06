@@ -5,5 +5,6 @@ data class Comment(
     val userId: String = "",
     val userName: String = "",
     val komentar: String = "",
-    val rating: Float = 0f
+    val rating: Float = 0f,
+    var documentId: String = ""
 )
