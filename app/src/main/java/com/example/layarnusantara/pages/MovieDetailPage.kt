@@ -22,7 +22,9 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +39,7 @@ import com.google.firebase.ktx.Firebase
 import com.example.layarnusantara.model.Comment
 import com.google.firebase.auth.ktx.auth
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.outlined.BookmarkBorder
 
 
 @Composable
@@ -57,19 +60,12 @@ fun MovieDetailPage(
     ) {
         Spacer(modifier = Modifier.height(42.dp))
 
-        AsyncImage(
-            model = thumbnail,
-            contentDescription = judul,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp)
-                .clip(RoundedCornerShape(12.dp))
-        )
 
         val context = LocalContext.current
 
         var currentReview by remember { mutableStateOf(0f) }
+        var isFavorite by remember { mutableStateOf(false) }
+
 
         LaunchedEffect(judul) {
             Firebase.firestore.collection("movie")
@@ -80,7 +76,108 @@ fun MovieDetailPage(
                         currentReview = doc.getDouble("review")?.toFloat() ?: 0f
                     }
                 }
+
+            Firebase.auth.currentUser?.uid?.let { uid ->
+                Firebase.firestore.collection("favorites")
+                    .whereEqualTo("userId", uid)
+                    .whereEqualTo("judul", judul)
+                    .get()
+                    .addOnSuccessListener { result ->
+                        isFavorite = !result.isEmpty
+                    }
+            }
         }
+
+        val user = Firebase.auth.currentUser
+        val db = Firebase.firestore
+
+        AsyncImage(
+            model = thumbnail,
+            contentDescription = judul,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(RoundedCornerShape(12.dp))
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = judul,
+                    color = Color.Black,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = durasi,
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = "Rating",
+                    tint = Color(0xFFFFC107)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "%.1f".format(currentReview),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = {
+                        user?.uid?.let { uid ->
+                            if (!isFavorite) {
+                                val favorite = hashMapOf(
+                                    "userId" to uid,
+                                    "judul" to judul,
+                                    "thumbnail" to thumbnail,
+                                    "durasi" to durasi,
+                                    "synopsis" to synopsis,
+                                    "video" to video
+                                )
+                                db.collection("favorites")
+                                    .add(favorite)
+                                    .addOnSuccessListener { isFavorite = true }
+                            } else {
+                                db.collection("favorites")
+                                    .whereEqualTo("userId", uid)
+                                    .whereEqualTo("judul", judul)
+                                    .get()
+                                    .addOnSuccessListener { result ->
+                                        for (doc in result) {
+                                            db.collection("favorites").document(doc.id).delete()
+                                        }
+                                        isFavorite = false
+                                    }
+                            }
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                        contentDescription = "Favorite",
+                        tint = if (isFavorite) Color(0xFFFFC107) else Color.Gray
+                    )
+                }
+
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
 
         Button(
             onClick = {
@@ -89,40 +186,13 @@ fun MovieDetailPage(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .padding(vertical = 8.dp)
         ) {
             Text(text = "Tonton Sekarang")
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            text = judul,
-            color = Color.Black,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = durasi, color = Color.Gray, fontSize = 14.sp)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Star, contentDescription = "Rating", tint = Color(0xFFFFC107))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "%.1f".format(currentReview),
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         Text(
             text = "Synopsis",

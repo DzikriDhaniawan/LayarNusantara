@@ -81,7 +81,7 @@ fun ContentScreen(modifier: Modifier = Modifier,
                   navController: NavController) {
     when(selectedIndex){
         0-> HomePage(modifier, navController)
-        1-> FavoritePage(modifier)
+        1-> FavoritePage(modifier, navController)
         2-> HistoryPage(modifier)
         3-> ProfilePage(modifier)
     }
