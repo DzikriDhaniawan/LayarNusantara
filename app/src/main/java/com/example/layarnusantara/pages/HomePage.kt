@@ -14,12 +14,14 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.layarnusantara.component.HeaderView
 import com.example.layarnusantara.component.BannerView
+import com.example.layarnusantara.pages.SearchPage
 import com.example.layarnusantara.component.CategorySection
 import com.example.layarnusantara.component.LatestMoviesFromFirebaseSection
 import com.example.layarnusantara.model.MovieFirebase
 import com.example.layarnusantara.repository.fetchMoviesFromFirestore
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+
 
 @Composable
 fun HomePage(modifier: Modifier = Modifier, navController: NavController) {
@@ -36,7 +38,7 @@ fun HomePage(modifier: Modifier = Modifier, navController: NavController) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        HeaderView(modifier = Modifier)
+        HeaderView(modifier = Modifier, navController = navController)
         Spacer(modifier = Modifier.height(10.dp))
         BannerView(modifier = Modifier)
         CategorySection(navController)

@@ -1,4 +1,4 @@
-package com.example.layarnusantara.pages
+    package com.example.layarnusantara.pages
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

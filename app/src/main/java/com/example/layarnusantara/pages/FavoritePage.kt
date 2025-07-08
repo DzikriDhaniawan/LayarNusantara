@@ -7,13 +7,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,7 +29,7 @@ import com.google.firebase.firestore.firestore
 fun FavoritePage(modifier: Modifier = Modifier, navController: NavController) {
     val db = Firebase.firestore
     val user = Firebase.auth.currentUser
-    var favoriteList by remember { mutableStateOf<List<Map<String, Any>>>(emptyList()) }
+    var favoriteList by remember { mutableStateOf<List<Pair<String, Map<String, Any>>>>(emptyList()) }
 
     LaunchedEffect(user?.uid) {
         user?.uid?.let { uid ->
@@ -36,7 +37,10 @@ fun FavoritePage(modifier: Modifier = Modifier, navController: NavController) {
                 .whereEqualTo("userId", uid)
                 .get()
                 .addOnSuccessListener { result ->
-                    favoriteList = result.documents.mapNotNull { it.data }
+                    favoriteList = result.documents.mapNotNull {
+                        val data = it.data
+                        if (data != null) Pair(it.id, data) else null
+                    }
                 }
         }
     }
@@ -59,28 +63,19 @@ fun FavoritePage(modifier: Modifier = Modifier, navController: NavController) {
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(favoriteList) { movie ->
+                items(favoriteList) { (docId, movie) ->
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val encodedJudul = Uri.encode(movie["judul"] as? String ?: "")
-                                val encodedThumbnail = Uri.encode(movie["thumbnail"] as? String ?: "")
-                                val encodedDurasi = Uri.encode(movie["durasi"] as? String ?: "")
-                                val encodedSynopsis = Uri.encode(movie["synopsis"] as? String ?: "")
-                                val encodedVideo = Uri.encode(movie["video"] as? String ?: "")
-
-                                navController.navigate(
-                                    "movie_detail/$encodedJudul/$encodedThumbnail/$encodedDurasi/$encodedSynopsis/$encodedVideo"
-                                )
-
-                            },
+                        modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        border = BorderStroke(1.dp, Color.Black),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Row(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             AsyncImage(
                                 model = movie["thumbnail"] as? String,
                                 contentDescription = movie["judul"] as? String,
@@ -88,21 +83,57 @@ fun FavoritePage(modifier: Modifier = Modifier, navController: NavController) {
                                 modifier = Modifier
                                     .size(80.dp)
                                     .clip(MaterialTheme.shapes.medium)
+                                    .clickable {
+                                        val encodedJudul = Uri.encode(movie["judul"] as? String ?: "")
+                                        val encodedThumbnail = Uri.encode(movie["thumbnail"] as? String ?: "")
+                                        val encodedDurasi = Uri.encode(movie["durasi"] as? String ?: "")
+                                        val encodedSynopsis = Uri.encode(movie["synopsis"] as? String ?: "")
+                                        val encodedVideo = Uri.encode(movie["video"] as? String ?: "")
+
+                                        navController.navigate(
+                                            "movie_detail/$encodedJudul/$encodedThumbnail/$encodedDurasi/$encodedSynopsis/$encodedVideo"
+                                        )
+                                    }
                             )
 
                             Spacer(modifier = Modifier.width(12.dp))
 
-                            Column(modifier = Modifier.weight(1f)) {
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp)
+                            ) {
                                 Text(
                                     text = movie["judul"] as? String ?: "",
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
+                                    fontSize = 14.sp,
+                                    maxLines = 2
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = movie["durasi"] as? String ?: "",
+                                    text = "Durasi: ${movie["durasi"] as? String ?: "-"}",
                                     fontSize = 12.sp,
                                     color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                val rating = (movie["review"] as? Number)?.toFloat() ?: 0f
+                                Text(
+                                    text = "⭐ $rating",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFFFFC107),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            IconButton(onClick = {
+                                db.collection("favorites").document(docId).delete().addOnSuccessListener {
+                                    favoriteList = favoriteList.filterNot { it.first == docId }
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Hapus",
+                                    tint = Color.Red
                                 )
                             }
                         }

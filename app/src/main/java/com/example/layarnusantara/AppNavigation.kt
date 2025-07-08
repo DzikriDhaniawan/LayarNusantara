@@ -15,6 +15,7 @@ import com.example.layarnusantara.screen.SignupScreen
 import com.example.layarnusantara.pages.AsalPage
 import com.example.layarnusantara.pages.FavoritePage
 import com.example.layarnusantara.pages.TemaPage
+import com.example.layarnusantara.pages.SearchPage
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
@@ -81,6 +82,11 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             FavoritePage(modifier, navController)
         }
 
+        composable("Search Page") {
+            SearchPage(modifier, navController)
+        }
+
 
     }
 }
+

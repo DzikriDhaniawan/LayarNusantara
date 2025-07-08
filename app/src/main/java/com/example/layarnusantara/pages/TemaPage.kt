@@ -2,6 +2,7 @@ package com.example.layarnusantara.pages
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -18,43 +19,58 @@ import com.example.layarnusantara.component.MovieCardFirebase
 import com.example.layarnusantara.model.MovieFirebase
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
 fun TemaPage(modifier: Modifier = Modifier, navController: NavController) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        // Header Judul Halaman
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                .background(Color(0xFF1D3557)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Tema Film",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+        // Header
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 0.dp,
+                            topEnd = 0.dp,
+                            bottomEnd = 34.dp,
+                            bottomStart = 34.dp
+                        )
+                    )
+                    .background(Color(0xFF1D3557)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Tema Film",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        val kategoriList = listOf("Cerita Rakyat", "Legenda")
 
-        // Section Kisah Rakyat
-        Text(text = "Kisah Rakyat", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1D3557))
-        Spacer(modifier = Modifier.height(8.dp))
-        MovieGridTema(navController, kategori = "Kisah Rakyat")
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Section Legenda
-        Text(text = "Legenda", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1D3557))
-        Spacer(modifier = Modifier.height(8.dp))
-        MovieGridTema(navController, kategori = "Legenda")
+        kategoriList.forEach { kategori ->
+            item {
+                Text(
+                    text = kategori,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1D3557),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                MovieGridTema(navController = navController, kategori = kategori)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
     }
 }
 
@@ -62,7 +78,7 @@ fun TemaPage(modifier: Modifier = Modifier, navController: NavController) {
 fun MovieGridTema(navController: NavController, kategori: String) {
     val movieList = remember { mutableStateListOf<MovieFirebase>() }
 
-    // Load data berdasarkan kategori
+    // Ambil data berdasarkan kategori dari Firestore
     LaunchedEffect(kategori) {
         Firebase.firestore.collection("movie")
             .whereEqualTo("kategori", kategori)
@@ -77,14 +93,18 @@ fun MovieGridTema(navController: NavController, kategori: String) {
     }
 
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth()
+        columns = GridCells.Fixed(1),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 500.dp) // batasi tinggi agar tidak crash
     ) {
         items(movieList) { movie ->
-            MovieCardFirebase(movie = movie, navController = navController)
+            MovieCardFirebase(
+                movie = movie,
+                navController = navController
+            )
         }
     }
 }
