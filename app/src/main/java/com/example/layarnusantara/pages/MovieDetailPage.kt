@@ -1,46 +1,32 @@
-    package com.example.layarnusantara.pages
+package com.example.layarnusantara.pages
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import android.net.Uri
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.*
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import com.example.layarnusantara.model.Comment
 import com.google.firebase.auth.ktx.auth
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.outlined.BookmarkBorder
-
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 
 @Composable
 fun MovieDetailPage(
@@ -60,15 +46,16 @@ fun MovieDetailPage(
     ) {
         Spacer(modifier = Modifier.height(42.dp))
 
-
         val context = LocalContext.current
+        val db = Firebase.firestore
+        val user = Firebase.auth.currentUser
 
         var currentReview by remember { mutableStateOf(0f) }
         var isFavorite by remember { mutableStateOf(false) }
-
+        var showPlayer by remember { mutableStateOf(false) }
 
         LaunchedEffect(judul) {
-            Firebase.firestore.collection("movie")
+            db.collection("movie")
                 .whereEqualTo("judul", judul)
                 .get()
                 .addOnSuccessListener { result ->
@@ -77,8 +64,8 @@ fun MovieDetailPage(
                     }
                 }
 
-            Firebase.auth.currentUser?.uid?.let { uid ->
-                Firebase.firestore.collection("favorites")
+            user?.uid?.let { uid ->
+                db.collection("favorites")
                     .whereEqualTo("userId", uid)
                     .whereEqualTo("judul", judul)
                     .get()
@@ -88,18 +75,19 @@ fun MovieDetailPage(
             }
         }
 
-        val user = Firebase.auth.currentUser
-        val db = Firebase.firestore
-
-        AsyncImage(
-            model = thumbnail,
-            contentDescription = judul,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp)
-                .clip(RoundedCornerShape(12.dp))
-        )
+        if (showPlayer) {
+            YouTubePlayerComposable(video)
+        } else {
+            AsyncImage(
+                model = thumbnail,
+                contentDescription = judul,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -108,107 +96,69 @@ fun MovieDetailPage(
             verticalAlignment = Alignment.Top
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = judul,
-                    color = Color.Black,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text(judul, color = Color.Black, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = durasi,
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
+                Text(durasi, color = Color.Gray, fontSize = 14.sp)
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = "Rating",
-                    tint = Color(0xFFFFC107)
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Star, contentDescription = "Rating", tint = Color(0xFFFFC107))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "%.1f".format(currentReview),
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
+                Text("%.1f".format(currentReview), color = Color.Gray, fontSize = 14.sp)
                 Spacer(modifier = Modifier.width(8.dp))
-                IconButton(
-                    onClick = {
-                        user?.uid?.let { uid ->
-                            if (!isFavorite) {
-                                val favorite = hashMapOf(
-                                    "userId" to uid,
-                                    "judul" to judul,
-                                    "thumbnail" to thumbnail,
-                                    "durasi" to durasi,
-                                    "synopsis" to synopsis,
-                                    "video" to video
-                                )
-                                db.collection("favorites")
-                                    .add(favorite)
-                                    .addOnSuccessListener { isFavorite = true }
-                            } else {
-                                db.collection("favorites")
-                                    .whereEqualTo("userId", uid)
-                                    .whereEqualTo("judul", judul)
-                                    .get()
-                                    .addOnSuccessListener { result ->
-                                        for (doc in result) {
-                                            db.collection("favorites").document(doc.id).delete()
-                                        }
-                                        isFavorite = false
-                                    }
+                IconButton(onClick = {
+                    user?.uid?.let { uid ->
+                        if (!isFavorite) {
+                            val favorite = hashMapOf(
+                                "userId" to uid,
+                                "judul" to judul,
+                                "thumbnail" to thumbnail,
+                                "durasi" to durasi,
+                                "synopsis" to synopsis,
+                                "video" to video
+                            )
+                            db.collection("favorites").add(favorite).addOnSuccessListener {
+                                isFavorite = true
                             }
+                        } else {
+                            db.collection("favorites")
+                                .whereEqualTo("userId", uid)
+                                .whereEqualTo("judul", judul)
+                                .get()
+                                .addOnSuccessListener { result ->
+                                    for (doc in result) {
+                                        db.collection("favorites").document(doc.id).delete()
+                                    }
+                                    isFavorite = false
+                                }
                         }
                     }
-                ) {
+                }) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                         contentDescription = "Favorite",
                         tint = if (isFavorite) Color(0xFFFFC107) else Color.Gray
                     )
                 }
-
             }
         }
 
         Spacer(modifier = Modifier.height(4.dp))
 
         Button(
-            onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(video))
-                context.startActivity(intent)
-            },
+            onClick = { showPlayer = true },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
         ) {
-            Text(text = "Tonton Sekarang")
+            Text("Tonton Sekarang")
         }
-
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Text(
-            text = "Synopsis",
-            color = Color.Black,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-
+        Text("Synopsis", color = Color.Black, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = synopsis,
-            color = Color.Black,
-            fontSize = 14.sp,
-            lineHeight = 20.sp
-        )
+        Text(synopsis, color = Color.Black, fontSize = 14.sp, lineHeight = 20.sp)
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -224,12 +174,51 @@ fun MovieDetailPage(
         CommentSection(
             movieId = judul,
             onCommentAdded = {
-                refreshRating(judul) { updatedReview ->
-                    currentReview = updatedReview
-                }
+                refreshRating(judul) { updatedReview -> currentReview = updatedReview }
             }
         )
     }
+}
+
+@Composable
+fun YouTubePlayerComposable(videoUrl: String) {
+    val videoId = extractYouTubeVideoId(videoUrl)
+
+    AndroidView(
+        factory = { context ->
+            YouTubePlayerView(context).apply {
+
+                addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
+                    override fun onReady(youTubePlayer: YouTubePlayer) {
+                        if (videoId.isNotEmpty()) {
+                            youTubePlayer.loadVideo(videoId, 0f)
+                        }
+                    }
+                })
+                // Inisialisasi otomatis
+                enableAutomaticInitialization = true
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16 / 9f)
+            .clip(RoundedCornerShape(12.dp))
+    )
+}
+
+
+fun extractYouTubeVideoId(url: String): String {
+    val patterns = listOf(
+        "(?<=watch\\?v=)[^&\\n]*",
+        "(?<=youtu.be/)[^?\\n]*",
+        "(?<=embed/)[^&\\n]*"
+    )
+    for (pattern in patterns) {
+        val regex = Regex(pattern)
+        val match = regex.find(url)
+        if (match != null) return match.value
+    }
+    return ""
 }
 
 @Composable

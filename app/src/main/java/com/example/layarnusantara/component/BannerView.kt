@@ -29,56 +29,64 @@ import com.tbuonomo.viewpagerdotsindicator.compose.DotsIndicator
 
 @Composable
 fun BannerView(modifier: Modifier = Modifier) {
-
     var bannerList by remember {
         mutableStateOf<List<String>>(emptyList())
     }
 
-
-
+    // Fetch banners from Firestore
     LaunchedEffect(Unit) {
         Firebase.firestore.collection("data")
             .document("banners")
-            .get().addOnCompleteListener() {
+            .get()
+            .addOnCompleteListener {
                 bannerList = it.result.get("urls") as List<String>
-
             }
     }
 
-    Column(
-        modifier = modifier
-    ) {
-        val pagerState = rememberPagerState(0) {
+    if (bannerList.isNotEmpty()) {
+        val pagerState = rememberPagerState(initialPage = 0) {
             bannerList.size
         }
 
-        HorizontalPager(
-            state = pagerState,
-            pageSpacing = 24.dp
-        ) {
-            AsyncImage(
-                model = bannerList.get(it),
-                contentDescription = "Banner image",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-            )
+        // Auto-slide logic
+        LaunchedEffect(pagerState.pageCount) {
+            while (true) {
+                kotlinx.coroutines.delay(3000) // Delay 3 detik
+                val nextPage = (pagerState.currentPage + 1) % pagerState.pageCount
+                pagerState.animateScrollToPage(nextPage)
+            }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-
-        DotsIndicator(
-            dotCount = bannerList.size,
-            type = ShiftIndicatorType(
-                DotGraphic(
-                    color = MaterialTheme.colorScheme.primary,
-                    size = 6.dp
+        Column(modifier = modifier) {
+            HorizontalPager(
+                state = pagerState,
+                pageSpacing = 24.dp
+            ) { page ->
+                AsyncImage(
+                    model = bannerList[page],
+                    contentDescription = "Banner image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
                 )
-            ),
-            pagerState = pagerState
-        )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            DotsIndicator(
+                dotCount = bannerList.size,
+                type = ShiftIndicatorType(
+                    DotGraphic(
+                        color = MaterialTheme.colorScheme.primary,
+                        size = 6.dp
+                    )
+                ),
+                pagerState = pagerState
+            )
+        }
     }
 }
+
 
 
 

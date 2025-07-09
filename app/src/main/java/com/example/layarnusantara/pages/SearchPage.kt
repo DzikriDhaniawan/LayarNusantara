@@ -28,7 +28,7 @@ fun SearchPage(modifier: Modifier = Modifier, navController: NavController) {
     var filmList by remember { mutableStateOf(listOf<Pair<String, MovieFirebase>>()) }
     var filteredList by remember { mutableStateOf(listOf<Pair<String, MovieFirebase>>()) }
 
-    // Ambil data dari koleksi "movie" di Firestore
+    // Ambil data dari Firestore
     LaunchedEffect(Unit) {
         Firebase.firestore.collection("movie")
             .get()
@@ -39,16 +39,15 @@ fun SearchPage(modifier: Modifier = Modifier, navController: NavController) {
                 }
                 filmList = data
                 filteredList = data
-
-                // Logging untuk debug
-                Log.d("FirebaseData", "Total film: ${data.size}")
-                data.forEach {
-                    Log.d("FirebaseData", "Judul: ${it.second.judul}")
-                }
             }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(WindowInsets.safeDrawing.asPaddingValues()) // 👈 Tambahkan padding aman di atas
+            .padding(horizontal = 16.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = {
                 navController.navigate("home") {
@@ -112,3 +111,4 @@ fun SearchPage(modifier: Modifier = Modifier, navController: NavController) {
         }
     }
 }
+

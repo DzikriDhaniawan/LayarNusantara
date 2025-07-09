@@ -22,7 +22,7 @@ import com.google.firebase.ktx.Firebase
 fun HeaderView(modifier: Modifier = Modifier, navController: NavController) {
     var name by remember { mutableStateOf("") }
 
-    // Ambil nama pengguna dari Firestore
+
     LaunchedEffect(Unit) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid
         if (uid != null) {
@@ -38,7 +38,7 @@ fun HeaderView(modifier: Modifier = Modifier, navController: NavController) {
         }
     }
 
-    // Kartu biru gelap dengan sudut kiri bawah bulat
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -49,7 +49,7 @@ fun HeaderView(modifier: Modifier = Modifier, navController: NavController) {
             bottomEnd = 0.dp,
             bottomStart = 32.dp
         ),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E2A3A)), // Biru gelap
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E2A3A)),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Row(

@@ -93,7 +93,7 @@ fun ProfilePage(modifier: Modifier) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF1F5F9))
+                    .background(Color.White)
             ) {
                 Box(
                     modifier = Modifier
@@ -108,7 +108,7 @@ fun ProfilePage(modifier: Modifier) {
                             modifier = Modifier
                                 .size(100.dp)
                                 .clickable { launcher.launch("image/*") },
-                            color = Color.White
+                            color = Color.LightGray
                         ) {
                             if (!imageUrl.isNullOrEmpty()) {
                                 Image(

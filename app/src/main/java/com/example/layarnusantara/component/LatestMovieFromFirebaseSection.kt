@@ -17,15 +17,28 @@ fun LatestMoviesFromFirebaseSection(
     movies: List<MovieFirebase>,
     navController: NavController
 ) {
-    Column {
-        Text("Terbaru!", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp) // Pastikan padding kiri-kanan konsisten
+    ) {
+        Text(
+            text = "Terbaru!",
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
 
-        LazyRow {
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(1.dp)
+        ) {
             items(movies) { movie ->
-                MovieCardFirebase(movie = movie, navController = navController)
+                MovieCardFirebase(
+                    movie = movie,
+                    navController = navController
+                )
             }
         }
     }
 }
-
