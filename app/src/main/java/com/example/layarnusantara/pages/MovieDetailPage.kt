@@ -195,7 +195,6 @@ fun YouTubePlayerComposable(videoUrl: String) {
                         }
                     }
                 })
-                // Inisialisasi otomatis
                 enableAutomaticInitialization = true
             }
         },

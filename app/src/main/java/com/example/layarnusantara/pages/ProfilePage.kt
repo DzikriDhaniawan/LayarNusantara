@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -34,7 +35,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.*
 
 @Composable
-fun ProfilePage(modifier: Modifier) {
+fun ProfilePage(modifier: Modifier, navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     val storage = FirebaseStorage.getInstance()
@@ -254,12 +255,11 @@ fun ProfilePage(modifier: Modifier) {
                 }
             }
 
-            // Logout button di pojok kanan atas
             IconButton(
                 onClick = { showLogoutDialog = true },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 48.dp, end = 16.dp) // MENGGESER TURUN DARI POJOK ATAS
+                    .padding(top = 48.dp, end = 16.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.ExitToApp,
@@ -278,6 +278,9 @@ fun ProfilePage(modifier: Modifier) {
                             showLogoutDialog = false
                             auth.signOut()
                             Toast.makeText(context, "Berhasil logout", Toast.LENGTH_SHORT).show()
+                            navController.navigate("auth") {
+                                popUpTo("home") { inclusive = true }
+                            }
                         }) {
                             Text("Ya")
                         }

@@ -1,5 +1,6 @@
 package com.example.layarnusantara.pages
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -45,7 +46,7 @@ fun SearchPage(modifier: Modifier = Modifier, navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(WindowInsets.safeDrawing.asPaddingValues()) // 👈 Tambahkan padding aman di atas
+            .padding(WindowInsets.safeDrawing.asPaddingValues())
             .padding(horizontal = 16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -102,7 +103,16 @@ fun SearchPage(modifier: Modifier = Modifier, navController: NavController) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                navController.navigate("film-detail/$id")
+                                val encodedJudul = Uri.encode(film.judul)
+                                val encodedThumbnail = Uri.encode(film.thumbnail)
+                                val encodedDurasi = Uri.encode(film.durasi)
+                                val encodedSynopsis = Uri.encode(film.synopsis)
+                                val encodedVideo = Uri.encode(film.video)
+
+                                navController.navigate(
+                                    "movie_detail/$encodedJudul/$encodedThumbnail/$encodedDurasi/$encodedSynopsis/$encodedVideo"
+                                )
+
                             }
                             .padding(8.dp)
                     )

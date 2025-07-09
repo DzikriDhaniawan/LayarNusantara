@@ -14,6 +14,7 @@ import com.example.layarnusantara.screen.LoginScreen
 import com.example.layarnusantara.screen.SignupScreen
 import com.example.layarnusantara.pages.AsalPage
 import com.example.layarnusantara.pages.FavoritePage
+import com.example.layarnusantara.pages.ProfilePage
 import com.example.layarnusantara.pages.TemaPage
 import com.example.layarnusantara.pages.SearchPage
 import com.google.firebase.Firebase
@@ -42,6 +43,10 @@ fun AppNavigation(modifier: Modifier = Modifier) {
 
         composable("home") {
             Homescreen(modifier, navController)
+        }
+
+        composable("profile") {
+            ProfilePage(modifier, navController)
         }
 
         composable(

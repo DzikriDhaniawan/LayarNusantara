@@ -30,6 +30,7 @@ fun FavoritePage(modifier: Modifier = Modifier, navController: NavController) {
     val db = Firebase.firestore
     val user = Firebase.auth.currentUser
     var favoriteList by remember { mutableStateOf<List<Pair<String, Map<String, Any>>>>(emptyList()) }
+    val ratingMap = remember { mutableStateMapOf<String, Float>() }
 
     LaunchedEffect(user?.uid) {
         user?.uid?.let { uid ->
@@ -64,6 +65,19 @@ fun FavoritePage(modifier: Modifier = Modifier, navController: NavController) {
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(favoriteList) { (docId, movie) ->
+                    val judul = movie["judul"] as? String ?: ""
+                    val rating = ratingMap[judul] ?: 0f
+
+                    LaunchedEffect(judul) {
+                        Firebase.firestore.collection("movie")
+                            .whereEqualTo("judul", judul)
+                            .get()
+                            .addOnSuccessListener { result ->
+                                val updatedRating = result.firstOrNull()?.getDouble("review")?.toFloat() ?: 0f
+                                ratingMap[judul] = updatedRating
+                            }
+                    }
+
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -116,9 +130,8 @@ fun FavoritePage(modifier: Modifier = Modifier, navController: NavController) {
                                     color = Color.Gray
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
-                                val rating = (movie["review"] as? Number)?.toFloat() ?: 0f
                                 Text(
-                                    text = "⭐ $rating",
+                                    text = "⭐ %.1f".format(rating),
                                     fontSize = 12.sp,
                                     color = Color(0xFFFFC107),
                                     fontWeight = FontWeight.Medium

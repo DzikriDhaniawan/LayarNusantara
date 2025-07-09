@@ -41,7 +41,7 @@
             when (selectedIndex) {
                 0 -> HomePage(modifier = Modifier.padding(innerPadding), navController)
                 1 -> FavoritePage(modifier = Modifier.padding(innerPadding), navController)
-                2 -> ProfilePage(modifier = Modifier.padding(innerPadding))
+                2 -> ProfilePage(modifier = Modifier.padding(innerPadding), navController)
             }
         }
     }

@@ -31,7 +31,7 @@ fun CategorySection(navController: NavController) {
         Text(
             text = "Kategori Film",
             fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 16.dp, bottom = 12.dp)
         )
 
