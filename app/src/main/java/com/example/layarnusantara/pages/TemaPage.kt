@@ -78,7 +78,6 @@ fun TemaPage(modifier: Modifier = Modifier, navController: NavController) {
 fun MovieGridTema(navController: NavController, kategori: String) {
     val movieList = remember { mutableStateListOf<MovieFirebase>() }
 
-    // Ambil data berdasarkan kategori dari Firestore
     LaunchedEffect(kategori) {
         Firebase.firestore.collection("movie")
             .whereEqualTo("kategori", kategori)
@@ -98,7 +97,7 @@ fun MovieGridTema(navController: NavController, kategori: String) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 500.dp) // batasi tinggi agar tidak crash
+            .heightIn(max = 500.dp)
     ) {
         items(movieList) { movie ->
             MovieCardFirebase(

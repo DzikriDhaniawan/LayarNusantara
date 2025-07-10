@@ -29,7 +29,6 @@ fun SearchPage(modifier: Modifier = Modifier, navController: NavController) {
     var filmList by remember { mutableStateOf(listOf<Pair<String, MovieFirebase>>()) }
     var filteredList by remember { mutableStateOf(listOf<Pair<String, MovieFirebase>>()) }
 
-    // Ambil data dari Firestore
     LaunchedEffect(Unit) {
         Firebase.firestore.collection("movie")
             .get()

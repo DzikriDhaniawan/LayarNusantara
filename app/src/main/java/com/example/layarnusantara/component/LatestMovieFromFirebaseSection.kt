@@ -20,7 +20,7 @@ fun LatestMoviesFromFirebaseSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp) // Pastikan padding kiri-kanan konsisten
+            .padding(horizontal = 16.dp)
     ) {
         Text(
             text = "Terbaru!",

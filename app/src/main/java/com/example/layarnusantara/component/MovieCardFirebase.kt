@@ -64,9 +64,9 @@ fun MovieCardFirebase(movie: MovieFirebase, navController: NavController) {
 
                 Column(
                     modifier = Modifier
-                        .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 36.dp) // beri ruang kanan untuk bookmark
+                        .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 36.dp)
                         .fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp) // Jarak antar teks lebih rapat
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
                         text = movie.judul,
